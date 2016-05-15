@@ -1,17 +1,32 @@
 #!/usr/bin/env python
+
+# run upsc utility with 5 seconds delay and store it's output to ups dictionary
+# commit selected measurements to influxdb database using official influxdb python client
+
 import subprocess
 import time
+import os
 from influxdb import InfluxDBClient
 
-influxdbhost = 'influxdb'
-upsdhost = 'upsd'
-upsname = 'sua1000i'
+# check for env variables and put defaults if not
+
+influxdb_host = os.getenv('INFLUXDB_HOST', 'influxdb')
+influxdb_name = os.getenv('INFLUXDB_NAME', 'ups')
+influxdb_username = os.getenv('INFLUXDB_USERNAME', 'admin')
+influxdb_password = os.getenv('INFLUXDB_PASSWORD', 'admin')
+upsdhost = os.getenv('UPSD_HOST', 'upsd')
+upsname = os.getenv('UPS_NAME', 'sua1000i')
 
 ups = {}
 
 while True:
-    for ln in subprocess.check_output(['upsc', upsname + '@' + upsdhost]).split('\n'):
-        if ln: data = ln.split(': ')
+    # upc provides lines like:
+    # output.current: 0.43
+    # output.frequency: 50.0
+    # output.voltage: 240.4
+    for upsc_line in subprocess.check_output(['upsc', upsname + '@' + upsdhost]).split('\n'):
+        if upsc_line:   # necessary to omit empty lines
+            data = upsc_line.split(': ')    # so data is a list with measurement name in [0] and the value in [1]
         ups[data[0]] = data[1]
 
     body = [
@@ -44,6 +59,6 @@ while True:
             }
         }
     ]
-    client = InfluxDBClient(influxdbhost, 8086, 'admin', 'admin', 'ups')
+    client = InfluxDBClient(influxdb_host, 8086, influxdb_username, influxdb_password, influxdb_name)
     client.write_points(body)
     time.sleep(5)
