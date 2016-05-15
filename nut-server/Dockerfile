@@ -1,5 +1,5 @@
 FROM resin/rpi-raspbian
-RUN apt-get update && apt-get install nut
+RUN apt-get update && apt-get -y install nut-server
 COPY nut.conf ups* /etc/nut/
 RUN chgrp nut /etc/nut/*
 COPY docker-entrypoint.sh /
