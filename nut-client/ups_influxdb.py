@@ -24,10 +24,10 @@ while True:
     # output.current: 0.43
     # output.frequency: 50.0
     # output.voltage: 240.4
-    for upsc_line in subprocess.check_output(['upsc', upsname + '@' + upsdhost]).split('\n'):
-        if upsc_line:   # necessary to omit empty lines
-            data = upsc_line.split(': ')    # so data is a list with measurement name in [0] and the value in [1]
-        ups[data[0]] = data[1]
+    for upsc_line in subprocess.check_output(['upsc', upsname + '@' + upsdhost], stderr=subprocess.STDOUT).split('\n'):
+        data = upsc_line.split(': ')    # so data is a list with measurement name in [0] and the value in [1]
+        if len(data) == 2:  # omitting empty lines and 'Init SSL without certificate database' line, storing only 'value: data'
+            ups[data[0]] = data[1]
 
     body = [
         {
